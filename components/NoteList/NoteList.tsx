@@ -1,7 +1,9 @@
+"use client";
+
 import css from "./NoteList.module.css";
 import { Note } from "../../types/note";
-import { useDeleteNote } from "@/lib/api/clientApi";
-import { useQueryClient } from "@tanstack/react-query";
+import { deleteNote } from "@/lib/api/clientApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -11,20 +13,22 @@ export interface NoteListProps {
 }
 
 export default function NoteList({ notes }: NoteListProps) {
-  const deleteMutation = useDeleteNote();
   const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteNote(id),
+    onSuccess: () => {
+      toast.success("Нотатку видалено.");
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+    onError: () => {
+      toast.error("Не вдалося видалити нотатку.");
+    },
+  });
 
   const handleDelete = (note: Note) => {
     if (window.confirm(`Видалити нотатку "${note.title}"?`)) {
-      deleteMutation.mutate(String(note.id), {
-        onSuccess: () => {
-          toast.success("Нотатку видалено.");
-          queryClient.invalidateQueries({ queryKey: ["notes"] });
-        },
-        onError: () => {
-          toast.error("Не вдалося видалити нотатку.");
-        },
-      });
+      deleteMutation.mutate(String(note.id));
     }
   };
 

@@ -1,38 +1,18 @@
-"use client";
-
-import css from "./Profile.module.css";
 import Image from "next/image";
 import Link from "next/link";
-import { useAuthStore } from "@/lib/store/authStore";
+import { User } from "@/types/user";
 
-export default function ProfileClient() {
-  const { user } = useAuthStore();
+interface ProfileClientProps {
+  user: User;
+}
 
+export default function ProfileClient({ user }: ProfileClientProps) {
   return (
-    <main className={css.mainContent}>
-      <div className={css.profileCard}>
-        <div className={css.header}>
-          <h1 className={css.formTitle}>Profile Page</h1>
-          <Link href="/profile/edit" className={css.editProfileButton}>
-            Edit Profile
-          </Link>
-        </div>
-
-        <div className={css.avatarWrapper}>
-          <Image
-            src={user?.avatar || "/default-avatar.png"}
-            alt="User Avatar"
-            width={120}
-            height={120}
-            className={css.avatar}
-          />
-        </div>
-
-        <div className={css.profileInfo}>
-          <p>Username: {user?.username || "Unknown"}</p>
-          <p>Email: {user?.email || "Unknown"}</p>
-        </div>
-      </div>
-    </main>
+    <div>
+      <Image src={user.avatar} alt={user.username} width={100} height={100} />
+      <h1>{user.username}</h1>
+      <p>{user.email}</p>
+      <Link href="/profile/edit">Edit Profile</Link>
+    </div>
   );
 }

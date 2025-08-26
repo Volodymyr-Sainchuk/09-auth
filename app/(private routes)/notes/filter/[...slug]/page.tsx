@@ -1,22 +1,21 @@
 import { Suspense } from "react";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 import Notes from "./Notes.client";
-import { fetchNotesServer, type FetchNotesResponse } from "@/lib/api/serverApi";
+import { type FetchNotesResponse, fetchNotes } from "@/lib/api/serverApi";
 import { cookies } from "next/headers";
 
 type Props = {
-  params: Promise<{ slug?: string[] }>;
+  params: { slug?: string[] };
 };
 
 export default async function FilteredNotesPage({ params }: Props) {
-  const slug = (await params).slug || [];
+  const slug = params.slug || [];
   const tag = slug.length > 0 ? slug[0] : "All";
 
   const queryClient = new QueryClient();
   const queryTag = tag === "All" ? undefined : tag;
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const token = (await cookies()).get("token")?.value;
 
   let data: FetchNotesResponse;
 
@@ -25,7 +24,7 @@ export default async function FilteredNotesPage({ params }: Props) {
       console.warn("Token not found. Fetching notes as guest.");
       data = { notes: [], totalPages: 1 };
     } else {
-      data = await fetchNotesServer({ query: "", page: 1, perPage: 12, tag: queryTag }, token);
+      data = await fetchNotes({ query: "", page: 1, perPage: 12, tag: queryTag });
     }
   } catch (err) {
     console.error("Failed to fetch notes:", err);

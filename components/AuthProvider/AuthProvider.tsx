@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/authStore";
-import { getSession } from "@/lib/api/clientApi";
+import { checkSession, getCurrentUser } from "@/lib/api/serverApi";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -12,28 +11,31 @@ interface AuthProviderProps {
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const { setUser, clearIsAuthenticated } = useAuthStore();
-  const router = useRouter();
 
   useEffect(() => {
-    async function checkAuth() {
+    async function initializeAuth() {
       try {
-        const user = await getSession();
-        if (user) {
-          setUser(user);
+        const sessionValid = await checkSession();
+        if (sessionValid) {
+          const user = await getCurrentUser();
+          if (user) {
+            setUser(user);
+          } else {
+            clearIsAuthenticated();
+          }
         } else {
           clearIsAuthenticated();
-          router.push("/sign-in");
         }
-      } catch {
+      } catch (err) {
+        console.error("Auth initialization failed:", err);
         clearIsAuthenticated();
-        router.push("/sign-in");
       } finally {
         setLoading(false);
       }
     }
 
-    checkAuth();
-  }, [router, setUser, clearIsAuthenticated]);
+    initializeAuth();
+  }, [setUser, clearIsAuthenticated]);
 
   if (loading) return <div>Loading...</div>;
 

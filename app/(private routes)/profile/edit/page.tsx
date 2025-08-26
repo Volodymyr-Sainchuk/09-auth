@@ -1,121 +1,126 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import css from "./page.module.css";
-import { useAuthStore } from "@/lib/store/authStore";
-import { updateUser, getCurrentUser } from "@/lib/api/clientApi";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
+import { getCookie } from "cookies-next";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Note } from "@/types/note";
+import type { User } from "@/types/user";
 
-export default function EditProfilePage() {
-  const router = useRouter();
-  const { user, setUser } = useAuthStore();
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-  // Локальний стан форми
-  const [username, setUsername] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+const axiosInstance = axios.create({
+  baseURL: API_BASE,
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true,
+});
 
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const me = user ?? (await getCurrentUser());
-        if (!me) {
-          console.error("User not found");
-          router.push("/login");
-          return;
-        }
-
-        setUser(me);
-        setUsername(me.username ?? "");
-      } catch (err) {
-        console.error("Failed to fetch user:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-
-    try {
-      if (!user) return;
-
-      const updatedUser = await updateUser({ username });
-      setUser(updatedUser);
-      setUsername(updatedUser.username ?? "");
-      router.push("/profile");
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const axiosErr = err as AxiosError;
-        if (axiosErr.response?.status === 409) {
-          alert("Цей username вже зайнятий. Спробуйте інший.");
-        } else {
-          console.error("Failed to update user:", axiosErr);
-          alert("Помилка при збереженні профілю.");
-        }
-      } else {
-        console.error("Unexpected error:", err);
-        alert("Помилка при збереженні профілю.");
-      }
-    } finally {
-      setSaving(false);
-    }
+// Додаємо токен з cookies у кожен запит
+axiosInstance.interceptors.request.use((config) => {
+  const token = getCookie("token") as string | undefined;
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
 
-  function handleCancel() {
-    router.push("/profile");
+// ================== AUTH ==================
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+}
+
+export async function registerUser(data: RegisterPayload): Promise<User> {
+  const res = await axiosInstance.post<User>("/auth/register", data);
+  return res.data;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export async function loginUser(data: LoginPayload): Promise<User> {
+  const res = await axiosInstance.post<User>("/auth/login", data);
+  return res.data;
+}
+
+export async function getSession(): Promise<User | null> {
+  try {
+    const res = await axiosInstance.get<User>("/auth/session");
+    return res.data ?? null;
+  } catch {
+    return null;
   }
+}
 
-  return (
-    <main className={css.mainContent}>
-      <div className={css.profileCard}>
-        <h1 className={css.formTitle}>Edit Profile</h1>
+export interface UpdateUserPayload {
+  username?: string;
+  avatar?: string;
+}
 
-        {/* Avatar */}
-        <div className={css.avatarWrapper}>
-          <Image
-            src={user?.avatar || "/default-avatar.png"}
-            alt="User Avatar"
-            width={120}
-            height={120}
-            className={css.avatar}
-          />
-        </div>
+export async function updateUser(data: UpdateUserPayload): Promise<User> {
+  const res = await axiosInstance.patch<User>("/users/me", data);
+  return res.data;
+}
 
-        {/* Form */}
-        <form className={css.profileInfo} onSubmit={handleSubmit}>
-          <div className={css.usernameWrapper}>
-            <label htmlFor="username">Username:</label>
-            <input
-              id="username"
-              type="text"
-              className={css.input}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
+// ================== NOTES ==================
 
-          <p>Email: {user?.email ?? "Not found"}</p>
+export type NewNote = Omit<Note, "id" | "createdAt" | "updatedAt">;
 
-          <div className={css.actions}>
-            <button type="submit" className={css.saveButton} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </button>
-            <button type="button" className={css.cancelButton} onClick={handleCancel}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </main>
-  );
+export interface FetchNotesResponse {
+  notes: Note[];
+  totalPages: number;
+}
+
+export async function createNote(note: NewNote): Promise<Note> {
+  const res = await axiosInstance.post<Note>("/notes", note);
+  return res.data;
+}
+
+export function useCreateNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createNote,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notes"] }),
+  });
+}
+
+export async function fetchNotes(params?: {
+  query?: string;
+  page?: number;
+  perPage?: number;
+  tag?: string;
+}): Promise<FetchNotesResponse> {
+  const { query = "", page = 1, perPage = 10, tag } = params ?? {};
+  const res = await axiosInstance.get<FetchNotesResponse>("/notes", {
+    params: {
+      ...(query.trim() ? { search: query.trim() } : {}),
+      ...(tag ? { tag } : {}),
+      page,
+      perPage,
+    },
+  });
+  return res.data;
+}
+
+export async function fetchNoteById(id: string): Promise<Note> {
+  const res = await axiosInstance.get<Note>(`/notes/${id}`);
+  return res.data;
+}
+
+export async function deleteNote(id: string): Promise<Note> {
+  const res = await axiosInstance.delete<Note>(`/notes/${id}`);
+  return res.data;
+}
+
+export function useDeleteNote() {
+  const queryClient = useQueryClient();
+
+  return useMutation<Note, Error, string>({
+    mutationFn: deleteNote,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notes"] }),
+  });
 }

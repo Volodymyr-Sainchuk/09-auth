@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import TanStackProvider from "@/components/TanStackProvider/TanStackProvider";
+import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 
@@ -70,14 +71,16 @@ export default function RootLayout({ children, modal }: LayoutProps) {
     <html lang="en">
       <body className={`${roboto.variable} ${geistSans.variable} ${geistMono.variable}`}>
         <TanStackProvider>
-          <Suspense fallback={null}>
-            <Header tags={tags} />
-          </Suspense>
-
-          {children}
-          {modal}
-
-          <Footer />
+          <AuthProvider>
+            {" "}
+            {/* <- додано AuthProvider */}
+            <Suspense fallback={null}>
+              <Header tags={tags} />
+            </Suspense>
+            {children}
+            {modal}
+            <Footer />
+          </AuthProvider>
         </TanStackProvider>
       </body>
     </html>
