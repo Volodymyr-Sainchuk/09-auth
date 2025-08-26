@@ -153,3 +153,8 @@ export function useDeleteNote() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notes"] }),
   });
 }
+
+export async function fetchNoteById(id: string): Promise<Note> {
+  const response = await axiosInstance.get<Note>(`/${id}`);
+  return response.data;
+}
