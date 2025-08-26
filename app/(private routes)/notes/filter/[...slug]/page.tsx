@@ -4,10 +4,12 @@ import Notes from "./Notes.client";
 import { fetchNotesServer, type FetchNotesResponse } from "@/lib/api/serverApi";
 import { cookies } from "next/headers";
 
-type Props = { params: { slug?: string[] } };
+type Props = {
+  params: Promise<{ slug?: string[] }>;
+};
 
 export default async function FilteredNotesPage({ params }: Props) {
-  const slug = params.slug || [];
+  const slug = (await params).slug || [];
   const tag = slug.length > 0 ? slug[0] : "All";
 
   const queryClient = new QueryClient();
