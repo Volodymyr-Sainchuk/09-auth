@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import ProfileClient from "./profileClient";
 import { getCurrentUser } from "@/lib/api/serverApi";
+import type { User } from "@/types/user";
 
 export const metadata: Metadata = {
   title: "Profile | NoteHub",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ProfilePage() {
-  const user = await getCurrentUser();
+  const user: User | null = await getCurrentUser();
 
   if (!user) {
     return <p>User not found or not logged in.</p>;
