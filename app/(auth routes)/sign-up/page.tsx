@@ -8,11 +8,11 @@ import { registerUser } from "@/lib/api/clientApi";
 export default function SignUpPage() {
   const router = useRouter();
 
-  // Ініціалізація через функцію, щоб на сервері і клієнті були однакові значення
   const [email, setEmail] = useState<string>(() => "");
   const [password, setPassword] = useState<string>(() => "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  console.log(loading);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
