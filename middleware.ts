@@ -8,6 +8,7 @@ export function middleware(req: NextRequest) {
   const isPrivateRoute = pathname.startsWith("/(private routes)");
 
   const token = req.cookies.get("token")?.value;
+  console.log(token);
 
   if (isPrivateRoute && !token) {
     const url = req.nextUrl.clone();
