@@ -1,36 +1,40 @@
 "use client";
+import React, { ReactNode, ErrorInfo } from "react";
 
-import { ReactNode, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-
-interface AuthLayoutProps {
+interface LayoutProps {
   children: ReactNode;
-  layoutType: "sign-in" | "sign-up";
+  type: "sign-in" | "sign-up";
 }
 
-export default function AuthLayout({ children, layoutType }: AuthLayoutProps) {
-  const router = useRouter();
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
 
-  useEffect(() => {
-    try {
-      router.refresh();
-    } catch (err: unknown) {
-      setHasError(true);
-      setErrorMessage(err instanceof Error ? err.message : String(err));
-      console.error("AuthLayout error:", err);
-    }
-  }, [router]);
-
-  if (hasError) {
-    return (
-      <div className={`${layoutType}-layout`}>
-        <h2>Something went wrong.</h2>
-        <pre>{errorMessage}</pre>
-      </div>
-    );
+export default class AuthLayout extends React.Component<LayoutProps, State> {
+  constructor(props: LayoutProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
 
-  return <div className={`${layoutType}-layout`}>{children}</div>;
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Error caught in AuthLayout:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className={`${this.props.type}-layout`}>
+          <h2>Something went wrong.</h2>
+          <pre>{this.state.error?.message}</pre>
+        </div>
+      );
+    }
+
+    return <div className={`${this.props.type}-layout`}>{this.props.children}</div>;
+  }
 }
