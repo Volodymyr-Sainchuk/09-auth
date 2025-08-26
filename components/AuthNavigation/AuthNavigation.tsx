@@ -8,6 +8,7 @@ import css from "./AuthNavigation.module.css";
 interface AuthNavigationProps {
   isAuthenticated: boolean;
   userEmail?: string;
+  onLogout: () => void;
 }
 
 export default function AuthNavigation({ isAuthenticated, userEmail }: AuthNavigationProps) {
