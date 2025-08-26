@@ -24,7 +24,6 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// Використовуємо middleware для всіх маршрутів
 export const config = {
   matcher: ["/(private routes)/:path*", "/(auth routes)/:path*"],
 };
