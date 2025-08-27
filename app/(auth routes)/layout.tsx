@@ -3,7 +3,7 @@ import React, { ReactNode, ErrorInfo } from "react";
 
 interface LayoutProps {
   children: ReactNode;
-  layoutType?: "sign-in" | "sign-up";
+  type?: "sign-in" | "sign-up";
 }
 
 interface State {
@@ -26,7 +26,7 @@ export default class AuthLayout extends React.Component<LayoutProps, State> {
   }
 
   render() {
-    const layoutClass = this.props.layoutType ? `${this.props.layoutType}-layout` : "auth-layout";
+    const layoutClass = this.props.type ? `${this.props.type}-layout` : "auth-layout";
 
     return (
       <div className={layoutClass}>
