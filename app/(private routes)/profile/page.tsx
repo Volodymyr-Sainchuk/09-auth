@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/api/serverApi";
 import type { User } from "@/types/user";
-import css from "./ProfilePage.module.css";
+import css from "./Profile.module.css";
 
 export const metadata: Metadata = {
   title: "Profile | NoteHub",
