@@ -2,7 +2,7 @@
 
 import { useEffect, useState, ReactNode } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
-import { checkSession, getCurrentUser } from "@/lib/api/serverApi";
+import { fetchClientSession } from "@/lib/api/clientApi";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -15,14 +15,9 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     async function initializeAuth() {
       try {
-        const sessionValid = await checkSession();
-        if (sessionValid) {
-          const user = await getCurrentUser();
-          if (user) {
-            setUser(user);
-          } else {
-            clearIsAuthenticated();
-          }
+        const user = await fetchClientSession();
+        if (user) {
+          setUser(user);
         } else {
           clearIsAuthenticated();
         }

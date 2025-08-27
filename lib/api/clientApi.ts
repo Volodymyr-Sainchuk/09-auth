@@ -1,20 +1,12 @@
 "use client";
 
-import axios from "axios";
 import { getCookie } from "cookies-next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Note } from "@/types/note";
 import type { User } from "@/types/user";
+import { api } from "@/lib/api/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-const axiosInstance = axios.create({
-  baseURL: API_BASE,
-  headers: { "Content-Type": "application/json" },
-  withCredentials: true,
-});
-
-axiosInstance.interceptors.request.use((config) => {
+api.interceptors.request.use((config) => {
   const token = getCookie("token") as string | undefined;
   if (token) {
     config.headers = config.headers ?? {};
@@ -29,7 +21,7 @@ export interface RegisterPayload {
 }
 
 export async function registerUser(data: RegisterPayload): Promise<User> {
-  const res = await axiosInstance.post<User>("/auth/register", data);
+  const res = await api.post<User>("/auth/register", data);
   return res.data;
 }
 
@@ -39,13 +31,13 @@ export interface LoginPayload {
 }
 
 export async function loginUser(data: LoginPayload): Promise<User> {
-  const res = await axiosInstance.post<User>("/auth/login", data);
+  const res = await api.post<User>("/auth/login", data);
   return res.data;
 }
 
 export async function getSession(): Promise<User | null> {
   try {
-    const res = await axiosInstance.get<User>("/auth/session");
+    const res = await api.get<User>("/auth/session");
     return res.data ?? null;
   } catch {
     return null;
@@ -58,7 +50,7 @@ export interface UpdateUserPayload {
 }
 
 export async function updateUser(data: UpdateUserPayload): Promise<User> {
-  const res = await axiosInstance.patch<User>("/users/me", data);
+  const res = await api.patch<User>("/users/me", data);
   return res.data;
 }
 
@@ -70,7 +62,7 @@ export interface FetchNotesResponse {
 }
 
 export async function createNote(note: NewNote): Promise<Note> {
-  const res = await axiosInstance.post<Note>("/notes", note);
+  const res = await api.post<Note>("/notes", note);
   return res.data;
 }
 
@@ -90,7 +82,7 @@ export async function fetchNotes(params?: {
   tag?: string;
 }): Promise<FetchNotesResponse> {
   const { query = "", page = 1, perPage = 10, tag } = params ?? {};
-  const res = await axiosInstance.get<FetchNotesResponse>("/notes", {
+  const res = await api.get<FetchNotesResponse>("/notes", {
     params: {
       ...(query.trim() ? { search: query.trim() } : {}),
       ...(tag ? { tag } : {}),
@@ -102,12 +94,12 @@ export async function fetchNotes(params?: {
 }
 
 export async function fetchNoteById(id: string): Promise<Note> {
-  const res = await axiosInstance.get<Note>(`/notes/${id}`);
+  const res = await api.get<Note>(`/notes/${id}`);
   return res.data;
 }
 
 export async function deleteNote(id: string): Promise<Note> {
-  const res = await axiosInstance.delete<Note>(`/notes/${id}`);
+  const res = await api.delete<Note>(`/notes/${id}`);
   return res.data;
 }
 
@@ -118,4 +110,13 @@ export function useDeleteNote() {
     mutationFn: deleteNote,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notes"] }),
   });
+}
+
+export async function fetchClientSession(): Promise<User | null> {
+  try {
+    const res = await api.get<User>("/auth/session");
+    return res.data ?? null;
+  } catch {
+    return null;
+  }
 }

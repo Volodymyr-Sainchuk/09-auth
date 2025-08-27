@@ -2,22 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/store/authStore";
 import css from "./AuthNavigation.module.css";
 
 interface AuthNavigationProps {
   isAuthenticated: boolean;
   userEmail?: string;
-  onLogout: () => void;
+  onLogout: () => Promise<void> | void;
 }
 
-export default function AuthNavigation({ isAuthenticated, userEmail }: AuthNavigationProps) {
+export default function AuthNavigation({ isAuthenticated, userEmail, onLogout }: AuthNavigationProps) {
   const router = useRouter();
-  const { logout } = useAuthStore();
 
   const handleLogout = async () => {
     try {
-      logout();
+      if (onLogout) await onLogout();
       router.push("/sign-in");
     } catch (err) {
       console.error("Logout failed:", err);

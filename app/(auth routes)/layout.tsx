@@ -3,7 +3,7 @@ import React, { ReactNode, ErrorInfo } from "react";
 
 interface LayoutProps {
   children: ReactNode;
-  type: "sign-in" | "sign-up";
+  layoutType?: "sign-in" | "sign-up";
 }
 
 interface State {
@@ -26,15 +26,19 @@ export default class AuthLayout extends React.Component<LayoutProps, State> {
   }
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <div className={`${this.props.type}-layout`}>
-          <h2>Something went wrong.</h2>
-          <pre>{this.state.error?.message}</pre>
-        </div>
-      );
-    }
+    const layoutClass = this.props.layoutType ? `${this.props.layoutType}-layout` : "auth-layout";
 
-    return <div className={`${this.props.type}-layout`}>{this.props.children}</div>;
+    return (
+      <div className={layoutClass}>
+        {this.state.hasError ? (
+          <>
+            <h2>Something went wrong.</h2>
+            <pre>{this.state.error?.message}</pre>
+          </>
+        ) : (
+          this.props.children
+        )}
+      </div>
+    );
   }
 }
