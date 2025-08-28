@@ -20,7 +20,7 @@ export interface RegisterPayload {
   password: string;
 }
 
-export async function registerUser(data: RegisterPayload): Promise<User> {
+export async function register(data: RegisterPayload): Promise<User> {
   const res = await api.post<User>("/auth/register", data);
   return res.data;
 }

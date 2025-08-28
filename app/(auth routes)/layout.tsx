@@ -1,5 +1,6 @@
 "use client";
-import React, { ReactNode, ErrorInfo } from "react";
+import React, { ReactNode, ErrorInfo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface LayoutProps {
   children: ReactNode;
@@ -11,7 +12,7 @@ interface State {
   error: Error | null;
 }
 
-export default class AuthLayout extends React.Component<LayoutProps, State> {
+class AuthLayoutBoundary extends React.Component<LayoutProps, State> {
   constructor(props: LayoutProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -41,4 +42,14 @@ export default class AuthLayout extends React.Component<LayoutProps, State> {
       </div>
     );
   }
+}
+
+export default function AuthLayout(props: LayoutProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.refresh();
+  }, [router]);
+
+  return <AuthLayoutBoundary {...props} />;
 }

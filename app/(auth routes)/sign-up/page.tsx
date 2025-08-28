@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import css from "./SignUpPage.module.css";
-import { registerUser } from "@/lib/api/clientApi";
+import { register } from "@/lib/api/clientApi";
 export default function SignUpPage() {
   const router = useRouter();
 
@@ -18,7 +18,7 @@ export default function SignUpPage() {
     setError(null);
 
     try {
-      await registerUser({ email, password });
+      await register({ email, password });
       router.push("/profile");
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);

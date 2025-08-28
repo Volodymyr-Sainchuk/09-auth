@@ -64,18 +64,26 @@ export async function createNote(newNote: NewNote) {
   return res.data;
 }
 
-export async function checkSession() {
-  const cookieHeader = await getCookieHeader();
+export async function checkSession(accessToken?: string, refreshToken?: string) {
+  if (!accessToken && !refreshToken) return { valid: false };
 
   try {
-    const res = await api.get<{ accessToken: string; user: User }>(`${API_BASE}/auth/session`, {
-      headers: { Cookie: cookieHeader },
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/session`, {
+      method: "GET",
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : "",
+        "x-refresh-token": refreshToken ?? "",
+      },
+      cache: "no-store",
     });
 
-    return res;
-  } catch (err: unknown) {
+    if (!res.ok) return { valid: false };
+
+    const data = await res.json();
+    return { valid: !!data?.valid, data, setCookie: res.headers.get("set-cookie") };
+  } catch (err) {
     console.error("❌ Session check failed:", err);
-    return null;
+    return { valid: false };
   }
 }
 
