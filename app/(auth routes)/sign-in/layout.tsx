@@ -1,5 +1,9 @@
 import AuthLayout from "../layout";
 
 export default function SignInLayout({ children }: { children: React.ReactNode }) {
-  return <AuthLayout type="sign-in">{children}</AuthLayout>;
+  return (
+    <div className="sign-in-layout">
+      <AuthLayout>{children}</AuthLayout>
+    </div>
+  );
 }
