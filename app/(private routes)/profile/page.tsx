@@ -11,7 +11,13 @@ export const metadata: Metadata = {
 };
 
 export default async function ProfilePage() {
-  const user: User | null = await getCurrentUser();
+  let user: User | null = null;
+
+  try {
+    user = await getCurrentUser();
+  } catch (err) {
+    console.error("Failed to fetch current user:", err);
+  }
 
   if (!user) {
     return <p>User not found or not logged in.</p>;
