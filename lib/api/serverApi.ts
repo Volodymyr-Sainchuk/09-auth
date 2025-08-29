@@ -68,28 +68,35 @@ export async function checkSession(accessToken?: string, refreshToken?: string) 
   if (!accessToken && !refreshToken) return { valid: false };
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/session`, {
-      method: "GET",
+    const res = await api.get("/auth/session", {
       headers: {
         Authorization: accessToken ? `Bearer ${accessToken}` : "",
         "x-refresh-token": refreshToken ?? "",
       },
-      cache: "no-store",
     });
 
-    if (!res.ok) return { valid: false };
-
-    const data = await res.json();
-    return { valid: !!data?.valid, data, setCookie: res.headers.get("set-cookie") };
-  } catch (err) {
-    console.error("❌ Session check failed:", err);
+    return {
+      valid: true,
+      data: res.data,
+      setCookie: res.headers["set-cookie"],
+    };
+  } catch {
     return { valid: false };
   }
 }
 
 export async function getCurrentUser() {
-  const session = await checkSession();
-  return session?.data.user ?? null;
+  const cookieHeader = await getCookieHeader();
+
+  try {
+    const res = await api.get<User>(`${API_BASE}/users/me`, {
+      headers: { Cookie: cookieHeader },
+    });
+
+    return res.data;
+  } catch {
+    return null;
+  }
 }
 
 export async function updateUser(data: Partial<User>) {

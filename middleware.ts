@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { checkSession } from "@/lib/api/serverApi";
+import { cookies } from "next/headers";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -8,10 +9,21 @@ export async function middleware(req: NextRequest) {
   const isPublicRoute = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
   const isPrivateRoute = pathname.startsWith("/profile") || pathname.startsWith("/notes");
 
-  const accessToken = req.cookies.get("accessToken")?.value;
-  const refreshToken = req.cookies.get("refreshToken")?.value;
+  const cookieStore = cookies();
+  const accessToken = (await cookieStore).get("accessToken")?.value;
+  const refreshToken = (await cookieStore).get("refreshToken")?.value;
 
-  const { valid, setCookie } = await checkSession(accessToken, refreshToken);
+  const session = await checkSession(accessToken ?? undefined, refreshToken ?? undefined);
+
+  const valid = session.valid;
+  let setCookie: string | undefined = undefined;
+
+  if (session.setCookie) {
+    setCookie = Array.isArray(session.setCookie) ? session.setCookie[0] : session.setCookie;
+  }
+
+  const response = NextResponse.next();
+  if (setCookie) response.headers.set("set-cookie", setCookie);
 
   if (isPrivateRoute && !valid) {
     const url = req.nextUrl.clone();
@@ -24,9 +36,6 @@ export async function middleware(req: NextRequest) {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
-
-  const response = NextResponse.next();
-  if (setCookie) response.headers.set("set-cookie", setCookie);
 
   return response;
 }

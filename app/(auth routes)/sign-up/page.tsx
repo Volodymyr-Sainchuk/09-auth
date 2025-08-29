@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/store/authStore";
 import css from "./SignUpPage.module.css";
 import { register } from "@/lib/api/clientApi";
+import type { User } from "@/types/user";
+
 export default function SignUpPage() {
   const router = useRouter();
+  const { setUser } = useAuthStore();
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -18,7 +22,8 @@ export default function SignUpPage() {
     setError(null);
 
     try {
-      await register({ email, password });
+      const user: User = await register({ email, password });
+      setUser(user); // оновлюємо глобальний стан
       router.push("/profile");
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
