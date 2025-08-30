@@ -68,8 +68,11 @@ export async function checkSession(accessToken?: string, refreshToken?: string) 
   if (!accessToken && !refreshToken) return { valid: false };
 
   try {
+    const cookieHeader = await getCookieHeader();
+
     const res = await api.get("/auth/session", {
       headers: {
+        Cookie: cookieHeader,
         Authorization: accessToken ? `Bearer ${accessToken}` : "",
         "x-refresh-token": refreshToken ?? "",
       },

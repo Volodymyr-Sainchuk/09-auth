@@ -9,32 +9,38 @@ export async function middleware(req: NextRequest) {
   const isPublicRoute = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
   const isPrivateRoute = pathname.startsWith("/profile") || pathname.startsWith("/notes");
 
-  const cookieStore = cookies();
-  const accessToken = (await cookieStore).get("accessToken")?.value;
-  const refreshToken = (await cookieStore).get("refreshToken")?.value;
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const refreshToken = cookieStore.get("refreshToken")?.value;
 
-  const session = await checkSession(accessToken ?? undefined, refreshToken ?? undefined);
+  let valid = false;
+  let setCookie: string | undefined;
 
-  const valid = session.valid;
-  let setCookie: string | undefined = undefined;
+  if (accessToken || refreshToken) {
+    const session = await checkSession(accessToken, refreshToken);
+    valid = session.valid;
 
-  if (session.setCookie) {
-    setCookie = Array.isArray(session.setCookie) ? session.setCookie[0] : session.setCookie;
+    if (session.setCookie) {
+      setCookie = Array.isArray(session.setCookie) ? session.setCookie[0] : session.setCookie;
+    }
   }
 
-  const response = NextResponse.next();
-  if (setCookie) response.headers.set("set-cookie", setCookie);
+  let response = NextResponse.next();
 
   if (isPrivateRoute && !valid) {
     const url = req.nextUrl.clone();
     url.pathname = "/sign-in";
-    return NextResponse.redirect(url);
+    response = NextResponse.redirect(url);
   }
 
   if (isPublicRoute && valid) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
-    return NextResponse.redirect(url);
+    response = NextResponse.redirect(url);
+  }
+
+  if (setCookie) {
+    response.headers.set("set-cookie", setCookie);
   }
 
   return response;
